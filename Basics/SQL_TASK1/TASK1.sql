@@ -79,7 +79,8 @@ INSERT INTO unlabeled_image_predictions (image_id, score) VALUES
                  --      third row starting from first by doing (seq%3 = 1) .
                  --   3. Resultant table is order by image id and take max to max 
                  --      10k entries by using limit .
-
+                 --   4. Weak label column is added by rounding off score using ROUND()
+                 --      functioin .
 
 
 SELECT image_id, 
@@ -95,8 +96,18 @@ LIMIT 100000 ;
 
 -- NEGATIVE SAMPELING 
 
+    --   Approach ->  1. Inside subquery ROW_NUMBER() window function is used 
+                 --      to assign row number to every row after sorting it on 
+                 --      the basis of score in increasing order .
+                 --   2. Now the row number (i.e. seq) is used to filter every 
+                 --      third row starting from first by doing (seq%3 = 1) .
+                 --   3. Resultant table is order by image id and take max to max 
+                 --      10k entries by using limit .
+                 --   4. Weak label column is added by rounding off score using ROUND()
+                 --      functioin .
+
 SELECT image_id, 
-       IF(ROUND(score) = 0, 0 , 1 ) AS weak_label
+       IF(ROUND(score) = 0, 0 , 1) AS weak_label
 FROM (
     SELECT image_id, score, 
            ROW_NUMBER() OVER (ORDER BY score) AS seq1 
