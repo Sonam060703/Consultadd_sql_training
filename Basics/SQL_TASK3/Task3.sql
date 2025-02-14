@@ -53,6 +53,10 @@ values
   , (2, 3, 'common')
   , (2, 6, 'common');
 
+
+-- Below query will give output as row wise but not concatenate the advised_name 
+-- when username , type , quality are same .
+
 select
   username
   , type
@@ -97,3 +101,44 @@ select
   *
 from
   accounts_items;
+
+
+with dummy1 as (
+  select 
+  ai.account_id as id , 
+  a.username as username , 
+  i.type as type , 
+  ai.quality as quality , 
+  i.name 
+  from accounts_items as ai join items as i on ai.item_id = i.id 
+  join accounts as a on a.id = ai.account_id 
+) ,
+dummy2 as(
+    select 
+    id ,
+    username ,
+    type ,
+    quality as advised_quality ,
+    dense_rank() over(partition by id , type order by field(quality, 'common', 'rare', 'epic') desc) as seq ,
+    name 
+    from dummy1
+) ,
+
+dummy3 as(
+  select 
+  id ,
+  username ,
+  type ,
+  advised_quality ,
+  group_concat(distinct name separator ',') as advised_name
+  from dummy2
+  where seq = 1 
+  group by id , type , advised_quality
+)
+
+select 
+username ,
+type ,
+advised_quality ,
+advised_name 
+from dummy3 ;
